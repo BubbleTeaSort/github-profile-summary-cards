@@ -95,3 +95,59 @@ ThemeMap.set('vision_friendly_dark', new Theme('#ffb000', '#ffffff', '#000000', 
 ThemeMap.set('vue', new Theme('#41b883', '#000000', '#ffffff', '#e4e2e2', 1, '#41b883', '#41b883'));
 ThemeMap.set('yeblu', new Theme('#ffff00', '#ffffff', '#002046', '#000000', 0, '#ffff00', '#ffff00'));
 ThemeMap.set('zenburn', new Theme('#f0dfaf', '#dcdccc', '#3f3f3f', '#3f3f3f', 1, '#8cd0d3', '#7f9f7f'));
+
+// Resolves an arbitrary user-supplied theme name to one that's guaranteed to
+// exist in ThemeMap. Falls back to 'default' for unknown values so downstream
+// helpers (template rendering, error-card construction) never crash on a typo.
+export const FALLBACK_THEME_NAME = 'default';
+export function resolveThemeName(themeName: string): string {
+    return ThemeMap.has(themeName) ? themeName : FALLBACK_THEME_NAME;
+}
+
+// --- Custom theme colors (query-parameter overrides) ---
+
+export interface ThemeColorOverride {
+    title?: string;
+    text?: string;
+    background?: string;
+    border?: string;
+    icon?: string;
+    chart?: string;
+}
+
+// Accept only short hex (rgb / rgba), full hex (rrggbb) and RGBA hex (rrggbbaa).
+// Anything else is ignored, which keeps user-supplied color parameters from
+// injecting arbitrary content into the generated SVG/CSS.
+const HEX_COLOR = /^([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+export function sanitizeHexColor(value: unknown): string | undefined {
+    if (typeof value !== 'string') return undefined;
+    return HEX_COLOR.test(value) ? `#${value}` : undefined;
+}
+
+// Build a color-override object from raw request query parameters.
+export function parseThemeColorOverride(query: Record<string, unknown>): ThemeColorOverride {
+    return {
+        title: sanitizeHexColor(query.title_color),
+        text: sanitizeHexColor(query.text_color),
+        background: sanitizeHexColor(query.bg_color),
+        border: sanitizeHexColor(query.border_color),
+        icon: sanitizeHexColor(query.icon_color),
+        chart: sanitizeHexColor(query.chart_color)
+    };
+}
+
+// Resolve a theme by name and apply any color overrides. Always returns a fresh
+// Theme instance so the shared ThemeMap entries are never mutated.
+export function resolveTheme(themeName: string, override?: ThemeColorOverride): Theme {
+    const base = ThemeMap.get(resolveThemeName(themeName))!;
+    return new Theme(
+        override?.title ?? base.title,
+        override?.text ?? base.text,
+        override?.background ?? base.background,
+        override?.border ?? base.stroke,
+        base.strokeOpacity,
+        override?.icon ?? base.icon,
+        override?.chart ?? base.chart
+    );
+}

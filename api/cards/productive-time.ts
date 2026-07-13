@@ -1,13 +1,15 @@
 import {getProductiveTimeSVGWithThemeName} from '../../src/cards/productive-time-card';
+import {getOwnerType} from '../../src/github-api/owner-type';
 import {getGitHubToken} from '../utils/github-token-updater';
 import {getErrorMsgCard} from '../utils/error-card';
 import {sendAnalytics} from '../../src/utils/analytics';
 import {CONST_CACHE_CONTROL} from '../../src/const/cache';
+import {resolveThemeName, parseThemeColorOverride} from '../../src/const/theme';
 import type {VercelRequest, VercelResponse} from '@vercel/node';
 
 export default async (req: VercelRequest, res: VercelResponse) => {
-    const {username, theme = 'default', utcOffset = '0'} = req.query;
-    if (typeof theme !== 'string') {
+    const {username, theme: rawTheme = 'default', utcOffset = '0'} = req.query;
+    if (typeof rawTheme !== 'string') {
         res.status(400).send('theme must be a string');
         return;
     }
@@ -19,16 +21,37 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         res.status(400).send('utcOffset must be a string');
         return;
     }
+    const theme = resolveThemeName(rawTheme);
+    const override = parseThemeColorOverride(req.query);
     try {
         let token = getGitHubToken(0);
         let tokenIndex = 0;
         while (true) {
             try {
-                const cardSVG = await getProductiveTimeSVGWithThemeName(username, theme, Number(utcOffset), token);
-                await sendAnalytics('productive-time-card', {username, theme, utcOffset}, req.headers);
+                const ownerType = await getOwnerType(username, token);
+                if (ownerType === 'Organization') {
+                    res.setHeader('Content-Type', 'image/svg+xml');
+                    res.setHeader('Cache-Control', CONST_CACHE_CONTROL);
+                    res.send(
+                        getErrorMsgCard(
+                            'The Productive Time card is not available for organization accounts. This card relies on per-user contribution data that GitHub does not expose at the organization level.',
+                            theme
+                        )
+                    );
+                    return;
+                }
+                const cardSVG = await getProductiveTimeSVGWithThemeName(
+                    username,
+                    theme,
+                    Number(utcOffset),
+                    token,
+                    override
+                );
                 res.setHeader('Content-Type', 'image/svg+xml');
                 res.setHeader('Cache-Control', CONST_CACHE_CONTROL);
                 res.send(cardSVG);
+                // Fire-and-forget: don't block the response on analytics
+                void sendAnalytics('productive_time_card', {username, theme, utcOffset}, req.headers);
                 return;
             } catch (err: any) {
                 console.log(err.message);
@@ -43,6 +66,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         }
     } catch (err: any) {
         console.log(err);
+        res.setHeader('Content-Type', 'image/svg+xml');
         res.send(getErrorMsgCard(err.message, theme));
     }
 };

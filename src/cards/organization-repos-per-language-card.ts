@@ -1,30 +1,34 @@
 import {ThemeMap, ThemeColorOverride, resolveTheme} from '../const/theme';
-import {getRepoLanguages} from '../github-api/repos-per-language';
+import {getOrganizationRepoLanguages} from '../github-api/organization-repos-per-language';
 import {createDonutChartCard} from '../templates/donut-chart-card';
 import {writeSVG} from '../utils/file-writer';
 
-export const createReposPerLanguageCard = async function (username: string, exclude: Array<string>, token: string) {
-    const langData = await getRepoLanguageData(username, exclude, token);
+export const createOrganizationReposPerLanguageCard = async function (
+    login: string,
+    exclude: Array<string>,
+    token: string
+) {
+    const langData = await getOrganizationRepoLanguageData(login, exclude, token);
     for (const themeName of ThemeMap.keys()) {
-        const svgString = getReposPerLanguageSVG(langData, themeName);
+        const svgString = getOrganizationReposPerLanguageSVG(langData, themeName);
         // output to folder, use 1- prefix for sort in preview
         writeSVG(themeName, '1-repos-per-language', svgString);
     }
 };
 
-export const getReposPerLanguageSVGWithThemeName = async function (
-    username: string,
+export const getOrganizationReposPerLanguageSVGWithThemeName = async function (
+    login: string,
     themeName: string,
     exclude: Array<string>,
     token: string,
     override?: ThemeColorOverride
 ) {
     if (!ThemeMap.has(themeName)) throw new Error('Theme does not exist');
-    const langData = await getRepoLanguageData(username, exclude, token);
-    return getReposPerLanguageSVG(langData, themeName, override);
+    const langData = await getOrganizationRepoLanguageData(login, exclude, token);
+    return getOrganizationReposPerLanguageSVG(langData, themeName, override);
 };
 
-const getReposPerLanguageSVG = function (
+const getOrganizationReposPerLanguageSVG = function (
     langData: {name: string; value: number; color: string}[],
     themeName: string,
     override?: ThemeColorOverride
@@ -33,8 +37,8 @@ const getReposPerLanguageSVG = function (
     return svgString;
 };
 
-const getRepoLanguageData = async function (username: string, exclude: Array<string>, token: string) {
-    const repoLanguages = await getRepoLanguages(username, exclude, token);
+const getOrganizationRepoLanguageData = async function (login: string, exclude: Array<string>, token: string) {
+    const repoLanguages = await getOrganizationRepoLanguages(login, exclude, token);
     let langData = [];
 
     // make a pie data

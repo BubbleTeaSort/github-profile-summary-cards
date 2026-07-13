@@ -1,4 +1,4 @@
-import {ThemeMap} from '../const/theme';
+import {ThemeMap, ThemeColorOverride, resolveTheme} from '../const/theme';
 import {getProductiveTime} from '../github-api/productive-time';
 import {createProductiveCard as productiveTimeCard} from '../templates/productive-time-card';
 import {writeSVG} from '../utils/file-writer';
@@ -16,19 +16,21 @@ export const getProductiveTimeSVGWithThemeName = async function (
     username: string,
     themeName: string,
     utcOffset: number,
-    token: string
+    token: string,
+    override?: ThemeColorOverride
 ) {
     if (!ThemeMap.has(themeName)) throw new Error('Theme does not exist');
     const productiveTimeData = await getProductiveTimeData(username, utcOffset, token);
-    return getProductiveTimeSVG(productiveTimeData, themeName, utcOffset);
+    return getProductiveTimeSVG(productiveTimeData, themeName, utcOffset, override);
 };
 
 const getProductiveTimeSVG = function (
     productiveTimeData: Array<number>,
     themeName: string,
-    utcOffset: number
+    utcOffset: number,
+    override?: ThemeColorOverride
 ): string {
-    const svgString = productiveTimeCard(productiveTimeData, ThemeMap.get(themeName)!, utcOffset);
+    const svgString = productiveTimeCard(productiveTimeData, resolveTheme(themeName, override), utcOffset);
     return svgString;
 };
 

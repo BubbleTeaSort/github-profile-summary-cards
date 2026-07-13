@@ -1,38 +1,42 @@
 import {ThemeMap, ThemeColorOverride, resolveTheme} from '../const/theme';
-import {getCommitLanguage, CommitLanguages} from '../github-api/commits-per-language';
+import {CommitLanguages} from '../github-api/commits-per-language';
+import {getOrganizationCommitLanguage} from '../github-api/organization-commits-per-language';
 import {createDonutChartCard} from '../templates/donut-chart-card';
 import {writeSVG} from '../utils/file-writer';
 
-export const createCommitsPerLanguageCard = async function (username: string, exclude: Array<string>, token: string) {
-    const statsData = await getCommitsLanguageData(username, exclude, token);
+export const createOrganizationCommitsPerLanguageCard = async function (
+    login: string,
+    exclude: Array<string>,
+    token: string
+) {
+    const langData = await getOrganizationCommitsLanguageData(login, exclude, token);
     for (const themeName of ThemeMap.keys()) {
-        const svgString = getCommitsLanguageSVG(statsData, themeName);
+        const svgString = getOrganizationCommitsLanguageSVG(langData, themeName);
         // output to folder, use 2- prefix for sort in preview
         writeSVG(themeName, '2-most-commit-language', svgString);
     }
 };
 
-export const getCommitsLanguageSVGWithThemeName = async function (
-    username: string,
+export const getOrganizationCommitsLanguageSVGWithThemeName = async function (
+    login: string,
     themeName: string,
     exclude: Array<string>,
     token: string,
     override?: ThemeColorOverride
 ): Promise<string> {
     if (!ThemeMap.has(themeName)) throw new Error('Theme does not exist');
-    const langData = await getCommitsLanguageData(username, exclude, token);
-    return getCommitsLanguageSVG(langData, themeName, override);
+    const langData = await getOrganizationCommitsLanguageData(login, exclude, token);
+    return getOrganizationCommitsLanguageSVG(langData, themeName, override);
 };
 
-const getCommitsLanguageSVG = function (
+const getOrganizationCommitsLanguageSVG = function (
     langData: {name: string; value: number; color: string}[],
     themeName: string,
     override?: ThemeColorOverride
 ): string {
     if (langData.length == 0) {
-        // Generic placeholder that fits inside the donut chart's legend space (~18 chars
-        // per line at 14-px font); avoids "in the last year"/"for this organization"
-        // overflows into the pie graphic for accounts with no recent commits.
+        // Generic placeholder; matches the user variant exactly so both flows render
+        // the same "no commits" donut.
         langData.push({
             name: 'There are no',
             value: 1,
@@ -48,12 +52,12 @@ const getCommitsLanguageSVG = function (
     return svgString;
 };
 
-const getCommitsLanguageData = async function (
-    username: string,
+const getOrganizationCommitsLanguageData = async function (
+    login: string,
     exclude: Array<string>,
     token: string
 ): Promise<{name: string; value: number; color: string}[]> {
-    const commitLanguages: CommitLanguages = await getCommitLanguage(username, exclude, token);
+    const commitLanguages: CommitLanguages = await getOrganizationCommitLanguage(login, exclude, token);
     let langData = [];
 
     // make a pie data
