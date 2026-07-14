@@ -35,6 +35,7 @@ const getLeetCodeStatsData = async function (username: string) {
     const allStats = user.submitStatsGlobal.acSubmissionNum.find((s: any) => s.difficulty === "All");
     const languages = user.languageProblemCount;
 
+    // LeetCode API returns the value "5000001" for the display value "~5,000,000" (including the tilde) for users over rank 5 million
     let ranking = user.profile.ranking >= 5000001 ? "~5,000,000" : user.profile.ranking.toLocaleString();
 
     const favoriteLanguage =
