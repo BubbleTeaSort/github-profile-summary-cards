@@ -79,6 +79,34 @@ describe('Analytics Utils', () => {
         expect(event.params.engagement_time_msec).toBe(100);
     });
 
+    it('normalizes username casing/whitespace into the same client_id', async () => {
+        process.env.GA_MEASUREMENT_ID = 'G-TEST';
+        process.env.GA_API_SECRET = 'SECRET';
+        process.env.VERCEL = '1';
+        const {sendAnalytics} = require('../../src/utils/analytics');
+
+        await sendAnalytics('e', {username: 'Torvalds'});
+        await sendAnalytics('e', {username: '  torvalds '});
+
+        const calls = (global.fetch as jest.Mock).mock.calls;
+        const id1 = JSON.parse(calls[0][1].body).client_id;
+        const id2 = JSON.parse(calls[1][1].body).client_id;
+        expect(id1).toBe(id2);
+    });
+
+    it('resolveSource classifies demo / bot / embed / other', () => {
+        const {resolveSource} = require('../../src/utils/analytics');
+        expect(resolveSource('demo', 'Mozilla/5.0')).toBe('demo');
+        expect(resolveSource('DEMO', 'Mozilla/5.0')).toBe('demo');
+        // Obvious bots/scrapers are tagged (not dropped) so they stay measurable.
+        expect(resolveSource(undefined, 'Googlebot/2.1')).toBe('bot');
+        expect(resolveSource(undefined, 'curl/8.4.0')).toBe('bot');
+        // GitHub's camo proxy is a real README embed, not a bot.
+        expect(resolveSource(undefined, 'github-camo (abc)')).toBe('embed');
+        expect(resolveSource(undefined, 'Mozilla/5.0')).toBe('other');
+        expect(resolveSource(['x'], 'Mozilla/5.0')).toBe('other');
+    });
+
     it('should handle fetch errors gracefully', async () => {
         process.env.GA_MEASUREMENT_ID = 'G-TEST';
         process.env.GA_API_SECRET = 'SECRET';
