@@ -1,10 +1,10 @@
 <div align="center">
-   <h1>GitHub Profile Summary Cards</h1>
+   <h1>LeetCode Profile Summary Cards</h1>
 
 
  [English](/README.md) | [繁體中文](/docs/README_zh-tw.md) | [简体中文](/docs/README_zh-CN.md)
    <p>
-      A tool to generate your github summary card for profile README. Inspired by <a href=https://github.com/tipsy/profile-summary-for-github>profile-summary-for-github</a>
+      A tool to generate your leetcode summary card for profile README. Inspired by <a href=https://github.com/tipsy/profile-summary-for-github>profile-summary-for-github</a>
    </p>
    <p>
       :star: This repo is just for fun, feel free to contribute! :star:
@@ -64,12 +64,11 @@
     - Theme name
   - username
     - Username
-  - name
-    - Optional override for the displayed name/title (e.g. `name=Casper`). Defaults to `login (name)`; long values are elided to fit on one line (~22 chars).
-### Top languages used in repository card
-![](docs/preview/api/repos-per-language.svg)
 
-`http://github-profile-summary-cards.vercel.app/api/cards/repos-per-language?username={username}&theme={theme_name}&exclude={exclude}`
+### Top languages used in problems card
+![](http://github-profile-summary-cards-peach-pi.vercel.app/api/cards/problems-per-language?username=vn7n24fzkq&theme=nord_bright)
+
+`http://github-profile-summary-cards-peach-pi.vercel.app/api/cards/problems-per-language?username={username}&theme={theme_name}&exclude={exclude}`
 - Accept url parameters
   - theme
     - Theme name
@@ -94,10 +93,10 @@
       - You can represent a space in the language list by using '%20' when you want to include a space.
     - You can found the supported languages in [here](https://github.com/github/linguist/blob/master/lib/linguist/languages.yml)
 
-### GitHub stats card
-![](docs/preview/api/stats.svg)
+### LeetCode stats card
+![](http://github-profile-summary-cards-peach-pi.vercel.app/api/cards/stats-leetcode?username=vn7n24fzkq&theme=nord_bright&)
 
-`http://github-profile-summary-cards.vercel.app/api/cards/stats?username={username}&theme={theme_name}`
+`http://github-profile-summary-cards-peach-pi.vercel.app/api/cards/stats-leetcode?username={username}&theme={theme_name}`
 - Accept url parameters
   - theme
     - Theme name
@@ -172,6 +171,11 @@ https://github-profile-summary-cards.vercel.app/api/cards/profile-details?userna
 
 Want the whole card — border and all — in on it? Use `animation=rgb`. Too much? Slow it right down with `&duration=10`. 😎
 
+> [!TIP]
+> The cache control headers let GitHub's Camo proxy serve the same image for a while, but you can force cache invalidation by running:
+>
+> `curl.exe -X PURGE https://camo.githubusercontent.com/hmac_string` (the same URL from opening the image)
+
 ---
 
 ## Organization cards
@@ -191,6 +195,9 @@ The same GitHub Action setup also works for organizations — set `USERNAME` to 
 ---
 
 ## Setting up your GitHub token
+
+> [!NOTE]
+> The LeetCode GraphQL API does not require or use a token
 
 Every way of running this project — locally, in a GitHub Action, on Vercel — needs a GitHub personal access token (PAT). If you've never created one, read this section first.
 
