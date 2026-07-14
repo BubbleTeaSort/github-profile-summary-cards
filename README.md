@@ -119,6 +119,11 @@ Values are hex **without** the leading `#` — 3, 4, 6, or 8 digits (the 4/8-dig
 
 Resolves [#110](https://github.com/vn7n24fzkq/github-profile-summary-cards/issues/110) and [#152](https://github.com/vn7n24fzkq/github-profile-summary-cards/issues/152).
 
+> [!TIP]
+> By default, the cache control headers let GitHub's Camo proxy serve the same image for a while, but you can force cache invalidation by running:
+>
+> `curl.exe -X PURGE https://camo.githubusercontent.com/hmac_string` (the same URL from opening the image)
+
 ---
 
 ## Organization cards
