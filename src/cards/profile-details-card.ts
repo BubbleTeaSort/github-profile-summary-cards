@@ -4,41 +4,30 @@ import {abbreviateNumber} from 'js-abbreviation-number';
 import {getProfileDetails, ProfileDetails, ProfileContribution} from '../github-api/profile-details';
 import {getContributionByYear} from '../github-api/contributions-by-year';
 import {createDetailCard} from '../templates/profile-details-card';
-import {writeSVG} from '../utils/file-writer';
+import {CardGenerationOptions, writeThemedCards} from '../utils/card-generation';
+import {buildProfileTitle} from '../utils/profile-title';
 
 /**
  * Creates a Profile Details Card SVG.
  *
  * @param {string} username - The GitHub username.
  * @param {string} token - The GitHub API token.
+ * @param {CardGenerationOptions} [options] - Optional theme/animation/displayName controls.
  * @return {Promise<void>}
  */
-// Returns the title to render on the profile-details card. When the combined
-// `${login} (${name})` would visually run into the chart area, breaks between
-// the login and the (name) so they render on two stacked lines. Never splits
-// within the login or within the name itself.
-const TITLE_SOFT_WRAP_THRESHOLD = 25;
-const buildProfileDetailsTitle = function (username: string, name: string | null): string {
-    if (name == null) {
-        return username;
-    }
-    const oneLine = `${username} (${name})`;
-    return oneLine.length > TITLE_SOFT_WRAP_THRESHOLD ? `${username}\n(${name})` : oneLine;
-};
-
-export const createProfileDetailsCard = async function (username: string, token: string) {
+export const createProfileDetailsCard = async function (
+    username: string,
+    token: string,
+    options: CardGenerationOptions = {}
+) {
     const profileDetailsData = await getProfileDetailsData(username, token);
-    for (const themeName of ThemeMap.keys()) {
-        const title = buildProfileDetailsTitle(username, profileDetailsData[0].name);
-        const svgString = getProfileDetailsSVG(
-            title,
-            profileDetailsData[0].contributions,
-            profileDetailsData[1],
-            themeName
-        );
-        // output to folder, use 0- prefix for sort in preview
-        writeSVG(themeName, '0-profile-details', svgString);
-    }
+    const title = buildProfileTitle(username, profileDetailsData[0].name, options.displayName);
+    // use 0- prefix for sort in preview
+    writeThemedCards(
+        '0-profile-details',
+        themeName => getProfileDetailsSVG(title, profileDetailsData[0].contributions, profileDetailsData[1], themeName),
+        options
+    );
 };
 /**
  * Generates the SVG for the Profile Details Card.
@@ -47,17 +36,19 @@ export const createProfileDetailsCard = async function (username: string, token:
  * @param {string} themeName - The card theme.
  * @param {string} token - The GitHub API token.
  * @param {ThemeColorOverride} [override] - Optional per-request color overrides.
+ * @param {string} [displayName] - Optional override for the displayed name/title.
  * @return {Promise<string>} The SVG string.
  */
 export const getProfileDetailsSVGWithThemeName = async function (
     username: string,
     themeName: string,
     token: string,
-    override?: ThemeColorOverride
+    override?: ThemeColorOverride,
+    displayName?: string
 ): Promise<string> {
     if (!ThemeMap.has(themeName)) throw new Error('Theme does not exist');
     const profileDetailsData = await getProfileDetailsData(username, token);
-    const title = buildProfileDetailsTitle(username, profileDetailsData[0].name);
+    const title = buildProfileTitle(username, profileDetailsData[0].name, displayName);
     return getProfileDetailsSVG(title, profileDetailsData[0].contributions, profileDetailsData[1], themeName, override);
 };
 
@@ -125,9 +116,9 @@ const getProfileDetailsData = async function (
                   index: 0,
                   icon: Icon.GITHUB,
                   name: 'Contributions',
-                  value: `${abbreviateNumber(totalContributions, 2)} Contributions in ${
-                      profileDetails.contributionYears[0]
-                  }`
+                  value: profileDetails.contributionYears[0]
+                      ? `${abbreviateNumber(totalContributions, 2)} Contributions in ${profileDetails.contributionYears[0]}`
+                      : `${abbreviateNumber(totalContributions, 2)} Contributions on GitHub`
               },
         {
             index: 1,

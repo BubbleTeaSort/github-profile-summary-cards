@@ -35,6 +35,10 @@ export function createDonutChartCard(
         .attr('y', d => labelHeight * d.index * 1.8 + card.height / 2 - radius - 12) // rect y-coordinate need fix,so I decrease y, but I don't know why this need fix.
         .attr('width', labelHeight)
         .attr('height', labelHeight)
+        // Each language's legend swatch + label is an animatable item (shares --gpsc-i
+        // with its arc) so a language reveals as one unit, one at a time.
+        .attr('class', 'gpsc-item')
+        .style('--gpsc-i', d => String(d.index))
         .attr('fill', pieData => pieData.data.color)
         .attr('stroke', `${theme.background}`)
         .style('stroke-width', '1px');
@@ -50,6 +54,8 @@ export function createDonutChartCard(
         })
         .attr('x', labelHeight * 1.2)
         .attr('y', d => labelHeight * d.index * 1.8 + card.height / 2 - radius)
+        .attr('class', 'gpsc-item')
+        .style('--gpsc-i', d => String(d.index))
         .style('fill', theme.text)
         .style('font-size', `${labelHeight}px`);
 
@@ -64,7 +70,10 @@ export function createDonutChartCard(
         .data(pieData)
         .enter()
         .append('g')
-        .attr('class', 'arc');
+        .attr('class', 'arc')
+        // Per-arc index for staggered ("one-by-one") reveal animations. Inert unless an
+        // animation preset references --gpsc-i; see src/utils/animation.ts.
+        .style('--gpsc-i', (d: PieArcDatum<{name: string; value: number; color: string}>) => String(d.index));
 
     g.append('path')
         .attr('d', arc)

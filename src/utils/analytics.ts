@@ -12,8 +12,37 @@ const GA_API_SECRET = process.env.GA_API_SECRET;
  */
 const getClientId = (username?: string): string => {
     if (!username) return crypto.randomUUID();
-    return crypto.createHash('sha256').update(username).digest('hex');
+    // GitHub logins are case-insensitive, so normalise (lowercase + trim) before
+    // hashing — otherwise `Torvalds` and `torvalds` would count as two "users".
+    return crypto.createHash('sha256').update(username.trim().toLowerCase()).digest('hex');
 };
+
+// Obvious crawlers / scrapers / CLI tools. This deliberately does NOT match
+// GitHub's camo image proxy — camo is how legitimate README embeds fetch the
+// card, so that traffic must be classified as `embed`, not `bot`.
+const BOT_UA =
+    /bot\b|crawl|spider|slurp|bingpreview|curl\/|wget\/|python-(?:requests|urllib)|scrapy|go-http-client|httpclient|headlesschrome|phantomjs/i;
+function isLikelyBot(userAgent: string): boolean {
+    return BOT_UA.test(userAgent);
+}
+
+/**
+ * Classifies where a card request came from, so it can be segmented (and bots
+ * filtered out) in GA rather than silently dropped:
+ * - `demo`  — the demo/landing page (it tags its requests with `?source=demo`);
+ * - `bot`   — an obvious crawler/scraper/CLI by User-Agent (never camo);
+ * - `embed` — GitHub's camo image proxy, i.e. a README / Markdown embed;
+ * - `other` — anything else (direct hits, unknown clients).
+ *
+ * @param {unknown} sourceParam - The raw `source` query value, if any.
+ * @param {string} userAgent - The request User-Agent.
+ * @return {string} The resolved source label.
+ */
+export function resolveSource(sourceParam: unknown, userAgent: string): string {
+    if (typeof sourceParam === 'string' && sourceParam.toLowerCase() === 'demo') return 'demo';
+    if (isLikelyBot(userAgent)) return 'bot';
+    return userAgent.toLowerCase().includes('camo') ? 'embed' : 'other';
+}
 
 import {IncomingHttpHeaders} from 'http';
 
@@ -39,11 +68,13 @@ export async function sendAnalytics(
     // Wrap the entire body so fire-and-forget callers (`void sendAnalytics(...)`)
     // can never produce an unhandled rejection, even if setup throws before fetch.
     try {
-        // Destructure to remove sensitive PII (username) from the final payload
+        // Destructure to remove sensitive PII (username) from the final payload.
+        // Bots aren't dropped here — the handler tags them `source=bot` (via
+        // resolveSource) so they stay visible in GA and can be filtered in reports.
         const {username, ...cleanParams} = params;
         const clientId = getClientId(username);
 
-        // Extract user IP and User-Agent from Vercel-injected headers
+        // Extract user IP + User-Agent from Vercel-injected headers
         // Vercel headers are plain objects (string | string[] | undefined)
         const forwardedFor = headers?.['x-forwarded-for'];
         const ip = (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor)?.split(',')[0] || '';

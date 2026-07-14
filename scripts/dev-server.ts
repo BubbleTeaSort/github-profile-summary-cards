@@ -7,13 +7,18 @@
 import 'dotenv/config';
 import http from 'http';
 import {URL} from 'url';
+import {readFileSync} from 'fs';
+import {join} from 'path';
 import type {VercelRequest, VercelResponse} from '@vercel/node';
+import {ThemeMap} from '../src/const/theme';
 
 import profileDetailsHandler from '../api/cards/profile-details';
 import reposPerLanguageHandler from '../api/cards/repos-per-language';
 import mostCommitLanguageHandler from '../api/cards/most-commit-language';
 import statsHandler from '../api/cards/stats';
 import productiveTimeHandler from '../api/cards/productive-time';
+import {parseAnimation, applyAnimation} from '../src/utils/animation';
+import {renderMockCard} from './mock-cards';
 
 type RouteHandler = (req: VercelRequest, res: VercelResponse) => Promise<void> | void;
 
@@ -27,7 +32,18 @@ const routes: Record<string, RouteHandler> = {
 
 const PORT = Number(process.env.PORT ?? 3000);
 
+// Mock mode renders cards from local fixtures (no GitHub token, no network),
+// which is ideal for previewing themes/animations. It is on by default when no
+// token is configured; force it on/off per request with `?mock=1` / `?mock=0`.
+const HAS_TOKEN = Boolean(process.env.GITHUB_TOKEN || process.env.GITHUB_TOKEN_0);
+function isMock(query: Record<string, string>): boolean {
+    if (query.mock === '1') return true;
+    if (query.mock === '0') return false;
+    return !HAS_TOKEN;
+}
+
 const indexHtml = (host: string) => `<!doctype html>
+<!-- mock mode: ${HAS_TOKEN ? 'off (token found)' : 'on (no token)'} -->
 <html><head><meta charset="utf-8"><title>Profile Summary Cards — Dev</title>
 <style>
   body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; color: #222; }
@@ -49,6 +65,12 @@ const indexHtml = (host: string) => `<!doctype html>
 </head><body>
 <h1>github-profile-summary-cards — Dev</h1>
 <p>This dev server runs the same Vercel route handlers locally. Type a user or org login below to render every card.</p>
+${
+    HAS_TOKEN
+        ? `<p class="small">GitHub token detected — cards use live data. Append <code>&amp;mock=1</code> to any card URL to preview from fixtures instead.</p>`
+        : `<p class="small" style="background:#fff8c5;border:1px solid #d4c65a;padding:.5rem;border-radius:4px">
+    <strong>Mock mode</strong> (no GitHub token found): cards render from local fixtures, so the login field is ignored and no network calls are made — perfect for previewing themes &amp; animations. Add a token to <code>.env</code> for live data.</p>`
+}
 <form id="renderForm">
   <label>Login (user or org)<input name="login" value="vercel" autocomplete="off" required></label>
   <label>Theme<select name="theme">
@@ -60,7 +82,22 @@ const indexHtml = (host: string) => `<!doctype html>
     <option>gruvbox</option>
     <option>nord_dark</option>
   </select></label>
-  <button>Render</button>
+  <label>Animation<select name="animation">
+    <option value="">none</option>
+    <option value="fade">fade</option>
+    <option value="rise">rise</option>
+    <option value="draw">draw</option>
+    <option value="stagger">stagger</option>
+    <option value="load">load</option>
+    <option value="sequence">sequence</option>
+    <option value="tint">tint</option>
+    <option value="rgb">rgb</option>
+    <option value="rgb-soft">rgb-soft</option>
+  </select></label>
+  <label>Duration (s)<input name="duration" type="number" step="0.1" min="0.2" max="5" placeholder="default" style="width:6rem"></label>
+  <label>Name override<input name="name" type="text" placeholder="(profile-details title)" autocomplete="off" style="width:12rem"></label>
+  <button type="submit">Render</button>
+  <button type="button" id="replayBtn" title="Re-fetch the cards so the entrance animation plays again">Replay ▶</button>
 </form>
 <div id="preview" class="grid"></div>
 
@@ -83,9 +120,12 @@ const indexHtml = (host: string) => `<!doctype html>
   var form = document.getElementById('renderForm');
   var grid = document.getElementById('preview');
 
-  function render(login, theme) {
+  function render(login, theme, animation, duration, name) {
     grid.replaceChildren();
     if (!login) return;
+    // Cache-buster so re-rendering the same login/theme still re-fetches the SVG,
+    // which lets a CSS entrance animation play from the start again.
+    var bust = Date.now();
     cards.forEach(function(c) {
       var wrap = document.createElement('div');
       // profile-details has a 700x200 SVG; span both columns so the chart
@@ -97,7 +137,11 @@ const indexHtml = (host: string) => `<!doctype html>
       var img = document.createElement('img');
       var url = '/api/cards/' + c
         + '?username=' + encodeURIComponent(login)
-        + '&theme=' + encodeURIComponent(theme);
+        + '&theme=' + encodeURIComponent(theme)
+        + (animation ? '&animation=' + encodeURIComponent(animation) : '')
+        + (animation && duration ? '&duration=' + encodeURIComponent(duration) : '')
+        + (name ? '&name=' + encodeURIComponent(name) : '')
+        + '&_t=' + bust;
       img.src = url;
       img.alt = c;
       wrap.appendChild(label);
@@ -106,34 +150,50 @@ const indexHtml = (host: string) => `<!doctype html>
     });
   }
 
-  // Restore the last login + theme on page load so a refresh doesn't blank the grid.
+  function selectOption(sel, value) {
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === value) { sel.selectedIndex = i; return; }
+    }
+  }
+
+  // Restore the last login + theme + animation on page load so a refresh doesn't blank the grid.
   try {
     var savedLogin = localStorage.getItem('devLogin') || '';
     var savedTheme = localStorage.getItem('devTheme') || '';
+    var savedAnim = localStorage.getItem('devAnimation') || '';
+    var savedDur = localStorage.getItem('devDuration') || '';
+    var savedName = localStorage.getItem('devName') || '';
     if (savedLogin) form.login.value = savedLogin;
-    if (savedTheme) {
-      for (var i = 0; i < form.theme.options.length; i++) {
-        if (form.theme.options[i].value === savedTheme) {
-          form.theme.selectedIndex = i;
-          break;
-        }
-      }
-    }
+    if (savedTheme) selectOption(form.theme, savedTheme);
+    if (savedAnim) selectOption(form.animation, savedAnim);
+    if (savedDur) form.duration.value = savedDur;
+    if (savedName) form.name.value = savedName;
     // Fall back to whatever the form is currently showing (default "vercel") so a fresh
     // first-time visitor with empty localStorage still gets a populated grid on load.
     var initialLogin = savedLogin || form.login.value.trim();
-    if (initialLogin) render(initialLogin, form.theme.value);
+    if (initialLogin) render(initialLogin, form.theme.value, form.animation.value, form.duration.value.trim(), form.name.value.trim());
   } catch (err) { /* localStorage unavailable; non-fatal */ }
 
   form.addEventListener('submit', function(e) {
     e.preventDefault();
     var login = e.target.login.value.trim();
     var theme = e.target.theme.value;
+    var animation = e.target.animation.value;
+    var duration = e.target.duration.value.trim();
+    var name = e.target.name.value.trim();
     try {
       localStorage.setItem('devLogin', login);
       localStorage.setItem('devTheme', theme);
+      localStorage.setItem('devAnimation', animation);
+      localStorage.setItem('devDuration', duration);
+      localStorage.setItem('devName', name);
     } catch (err) { /* ignore */ }
-    render(login, theme);
+    render(login, theme, animation, duration, name);
+  });
+
+  // Replay re-renders with the current values (new cache-buster) so the animation plays again.
+  document.getElementById('replayBtn').addEventListener('click', function() {
+    render(form.login.value.trim(), form.theme.value, form.animation.value, form.duration.value.trim(), form.name.value.trim());
   });
 })();
 </script>
@@ -147,6 +207,19 @@ const server = http.createServer(async (rawReq, rawRes) => {
             rawRes.end(indexHtml(rawReq.headers.host ?? `localhost:${PORT}`));
             return;
         }
+        // Serve the real landing page (api/pages/demo.html) so it can be tested here
+        // against the mock cards — no Vercel CLI, no token needed.
+        if (url.pathname === '/demo' || url.pathname === '/demo.html') {
+            rawRes.setHeader('Content-Type', 'text/html; charset=utf-8');
+            rawRes.end(readFileSync(join(__dirname, '../api/pages/demo.html'), 'utf-8'));
+            return;
+        }
+        // The landing page fetches this to populate the theme dropdown.
+        if (url.pathname === '/api/theme') {
+            rawRes.setHeader('Content-Type', 'application/json');
+            rawRes.end(JSON.stringify({themes: [...ThemeMap.keys()]}));
+            return;
+        }
         const handler = routes[url.pathname];
         if (!handler) {
             rawRes.statusCode = 404;
@@ -155,6 +228,18 @@ const server = http.createServer(async (rawReq, rawRes) => {
         }
         const query: Record<string, string> = {};
         url.searchParams.forEach((v, k) => (query[k] = v));
+
+        // Mock mode: render from fixtures without touching GitHub, then apply the
+        // same animation the real send path would.
+        if (isMock(query)) {
+            const card = url.pathname.replace('/api/cards/', '');
+            const parsed = Number(query.utcOffset);
+            const utcOffset = Number.isFinite(parsed) ? Math.min(14, Math.max(-12, parsed)) : 0;
+            const svg = renderMockCard(card, query.theme ?? 'default', utcOffset, query.name);
+            rawRes.setHeader('Content-Type', 'image/svg+xml');
+            rawRes.end(applyAnimation(svg, parseAnimation(query.animation), query.duration));
+            return;
+        }
         const req = Object.assign(rawReq, {query, cookies: {}, body: undefined}) as unknown as VercelRequest;
         const res = Object.assign(rawRes, {
             status(code: number) {

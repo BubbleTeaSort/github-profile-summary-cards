@@ -2,7 +2,7 @@
    <h1>LeetCode Profile Summary Cards</h1>
 
 
- [English](/README.md) | [简体中文](/docs/README_zh-CN.md) | [繁體中文](/docs/README_zh-tw.md)
+ [English](/README.md) | [繁體中文](/docs/README_zh-tw.md) | [简体中文](/docs/README_zh-CN.md)
    <p>
       A tool to generate your leetcode summary card for profile README. Inspired by <a href=https://github.com/tipsy/profile-summary-for-github>profile-summary-for-github</a>
    </p>
@@ -25,13 +25,17 @@
 <p>
 <a href="https://github-profile-summary-cards.vercel.app/demo.html">Get your own cards now!!</a>
 </p>
+<p>
+<a href="https://www.buymeacoffee.com/vn7n24fzkq" target="_blank" rel="noopener"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="50"></a>
+</p>
 
 
-![](https://raw.githubusercontent.com/vn7n24fzkq/vn7n24fzkq/master/profile-summary-card-output/solarized/0-profile-details.svg)
-![](https://raw.githubusercontent.com/vn7n24fzkq/vn7n24fzkq/master/profile-summary-card-output/solarized/1-repos-per-language.svg)
-![](https://raw.githubusercontent.com/vn7n24fzkq/vn7n24fzkq/master/profile-summary-card-output/solarized/2-most-commit-language.svg)
-![](https://raw.githubusercontent.com/vn7n24fzkq/vn7n24fzkq/master/profile-summary-card-output/solarized/3-stats.svg)
-![](https://raw.githubusercontent.com/vn7n24fzkq/vn7n24fzkq/master/profile-summary-card-output/solarized/4-productive-time.svg)
+<!-- Sample cards (mock data, `load` animation baked in). Regenerate with `npm run generate:preview`. -->
+![](docs/preview/hero/0-profile-details.svg)
+![](docs/preview/hero/1-repos-per-language.svg)
+![](docs/preview/hero/2-most-commit-language.svg)
+![](docs/preview/hero/3-stats.svg)
+![](docs/preview/hero/4-productive-time.svg)
 
 </div>
 
@@ -40,19 +44,19 @@
 |   |   |   |   |   |
 |:---:|:---:|:---:|:---:|:---:|
 |default|2077|dracula|github|github_dark|
-|![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=default)|![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=2077)| ![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=dracula)|![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=github)|![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=github_dark)|
+|![](docs/preview/themes/default.svg)|![](docs/preview/themes/2077.svg)| ![](docs/preview/themes/dracula.svg)|![](docs/preview/themes/github.svg)|![](docs/preview/themes/github_dark.svg)|
 |gruvbox|monokai|nord_bright|nord_dark|radical|
-|![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=gruvbox)|![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=monokai)| ![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=nord_bright)|![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=nord_dark)  |![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=radical)|
+|![](docs/preview/themes/gruvbox.svg)|![](docs/preview/themes/monokai.svg)| ![](docs/preview/themes/nord_bright.svg)|![](docs/preview/themes/nord_dark.svg)  |![](docs/preview/themes/radical.svg)|
 |solarized|solarized_dark|tokyonight|vue|zenburn|
-|![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=solarized)|![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=solarized_dark)| ![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=tokyonight)|![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=vue)  |![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=zenburn)|
-|transparent|
-|![](https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=transparent)|
+|![](docs/preview/themes/solarized.svg)|![](docs/preview/themes/solarized_dark.svg)| ![](docs/preview/themes/tokyonight.svg)|![](docs/preview/themes/vue.svg)  |![](docs/preview/themes/zenburn.svg)|
+|transparent| | | | |
+|![](docs/preview/themes/transparent.svg)| | | | |
 
 [More themes](https://github.com/vn7n24fzkq/github-profile-summary-cards-example/tree/master/profile-summary-card-output)
 
 ## How to use (API)
 ### Profile details card
-![](http://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=vn7n24fzkq&theme=nord_bright)
+![](docs/preview/themes/nord_bright.svg)
 
 `http://github-profile-summary-cards.vercel.app/api/cards/profile-details?username={username}&theme={theme_name}`
 - Accept url parameters
@@ -60,6 +64,7 @@
     - Theme name
   - username
     - Username
+
 ### Top languages used in problems card
 ![](http://github-profile-summary-cards-peach-pi.vercel.app/api/cards/problems-per-language?username=vn7n24fzkq&theme=nord_bright)
 
@@ -75,7 +80,7 @@
     - You can found the supported languages in [here](https://github.com/github/linguist/blob/master/lib/linguist/languages.yml)
 
 ### Top languages in commits card
-![](http://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username=vn7n24fzkq&theme=nord_bright)
+![](docs/preview/api/most-commit-language.svg)
 
 `http://github-profile-summary-cards.vercel.app/api/cards/most-commit-language?username={username}&theme={theme_name}&exclude={exclude}`
 - Accept url parameters
@@ -99,7 +104,7 @@
     - Username
 
 ### Productive time card
-![](http://github-profile-summary-cards.vercel.app/api/cards/productive-time?username=vn7n24fzkq&theme=nord_bright&utcOffset=8)
+![](docs/preview/api/productive-time.svg)
 
 `http://github-profile-summary-cards.vercel.app/api/cards/productive-time?username={username}&theme={theme_name}&utcOffset={utcOffset}`
 - accept url parameters
@@ -119,8 +124,55 @@ Values are hex **without** the leading `#` — 3, 4, 6, or 8 digits (the 4/8-dig
 
 Resolves [#110](https://github.com/vn7n24fzkq/github-profile-summary-cards/issues/110) and [#152](https://github.com/vn7n24fzkq/github-profile-summary-cards/issues/152).
 
+### Animations ✨ (new)
+
+Cards can now **animate**! Add an optional `animation` parameter and the card plays a pure-CSS entrance when it loads — no GIFs, no JavaScript, works right inside your GitHub README. The background/frame appears instantly and the animation plays on the individual pieces (each stat row, each language, each bar), so it reads as the content filling into a ready card.
+
+`none` (default) · `fade` · `rise` · `draw` · `stagger` · `load` · `sequence` · `tint` · `rgb` · `rgb-soft`
+
+| Preset | What it does |
+|---|---|
+| `fade` / `rise` | Content fades in (and gently slides up for `rise`). |
+| `draw` | Bars grow, donut segments pop, and the contributions line draws on. |
+| `stagger` | Every piece fades in, one after another. |
+| `load` | A coordinated "loading → loaded" assembly: parts stagger in, then the charts draw on. |
+| `sequence` | Strict one-by-one reveal: title, each row, each language in order, then the line wipes in from the left along the time axis. |
+| `tint` | Content fades in while its colours sweep from a shifted hue back to normal — a soft colour settle. |
+| `rgb` | A continuous "gaming RGB" loop — the **whole card** (background included) cycles through the spectrum, rotating your theme's colours. |
+| `rgb-soft` | The same colour cycle, but **only the content** — the background keeps its theme colour. |
+
+```
+https://github-profile-summary-cards.vercel.app/api/cards/stats?username=vn7n24fzkq&theme=default&animation=load
+```
+
+<!-- Baked-in animation previews (mock data). Regenerate with `npm run generate:preview`. -->
+![](docs/preview/animations/load.svg)
+![](docs/preview/animations/sequence.svg)
+![](docs/preview/animations/draw.svg)
+![](docs/preview/animations/tint.svg)
+
+**Speed:** every preset has a sensible default. Add `duration` (in seconds, `0.2`–`10`) to make it faster or slower — it scales the whole thing, including the staggered/draw-on timing (for the `rgb` presets it's the colour-cycle period):
+
+```
+https://github-profile-summary-cards.vercel.app/api/cards/stats?username=vn7n24fzkq&theme=default&animation=load&duration=3
+```
+
+Any unrecognized `animation` value is treated as `none`, an invalid `duration` falls back to the preset default, and visitors with `prefers-reduced-motion` set always get the final, un-animated card.
+
+#### 🌈 Feeling fancy? Turn on the RGB.
+
+Give your profile that gaming-keyboard glow. `rgb-soft` cycles your card's colours forever while the background stays put:
+
+![](docs/preview/animations/rgb-soft.svg)
+
+```
+https://github-profile-summary-cards.vercel.app/api/cards/profile-details?username=YOUR_NAME&theme=github_dark&animation=rgb-soft
+```
+
+Want the whole card — border and all — in on it? Use `animation=rgb`. Too much? Slow it right down with `&duration=10`. 😎
+
 > [!TIP]
-> By default, the cache control headers let GitHub's Camo proxy serve the same image for a while, but you can force cache invalidation by running:
+> The cache control headers let GitHub's Camo proxy serve the same image for a while, but you can force cache invalidation by running:
 >
 > `curl.exe -X PURGE https://camo.githubusercontent.com/hmac_string` (the same URL from opening the image)
 
@@ -186,7 +238,7 @@ Always set an expiration (90 days is a good default) and copy the token immediat
 
 Where the token lives depends on how you're running the tool. Same token, different home.
 
-#### Local development (`npm run test:local` or `vercel dev`)
+#### Local development (`npm run dev`, `npm run test:local`, or `vercel dev`)
 
 Copy `.env.example` to `.env` in the repo root and paste the token in:
 
@@ -194,7 +246,12 @@ Copy `.env.example` to `.env` in the repo root and paste the token in:
 GITHUB_TOKEN=your_github_token_here
 ```
 
-`.env` is already in [.gitignore](.gitignore) — do not commit it. Both `npm run test:local` and `vercel dev` auto-load this file.
+`.env` is already in [.gitignore](.gitignore) — do not commit it. All of the commands below auto-load it.
+
+Three ways to preview locally:
+- **`npm run dev`** — runs the real card handlers on a local server at `http://localhost:3000/` and live-reloads on save; type a user or org login to render every card. Best for iterating.
+- **`npm run test:local -- <login> [utcOffset] [exclude]`** — renders all cards for one login to `profile-summary-card-output/`.
+- **`vercel dev`** — full Vercel emulation of the API routes and the `/demo` page.
 
 #### GitHub Actions (production card refresh on your profile repo)
 
@@ -317,7 +374,21 @@ jobs:
           EXCLUDE: ""
           # AUTO_PUSH is optional, a boolean variable default to true, whether automatically push generated files to desired branch
           AUTO_PUSH: true
+          # THEME is optional; set it to generate only that one theme (e.g. github_dark). Leave empty to generate every theme.
+          THEME: ""
+          # ANIMATION is optional; bake a CSS animation into the cards: none | fade | rise | draw | stagger | load | sequence | tint | rgb | rgb-soft. Empty = no animation.
+          ANIMATION: ""
+          # DURATION is optional; animation speed in seconds (0.2–10). Only applies when ANIMATION is set. Empty = preset default.
+          DURATION: ""
+          # NAME is optional; override the displayed name/title on the profile-details card (elided to ~22 chars). Empty = default "login (name)".
+          NAME: ""
 ```
+
+`THEME` and `ANIMATION` are independent:
+- **neither** → every theme, no animation (the default, unchanged).
+- **`THEME` only** → just that theme, no animation.
+- **`ANIMATION` only** → every theme, each with that animation.
+- **both** → that one theme with that animation.
 
 ---
 
@@ -351,13 +422,25 @@ npm run test:local -- microsoft 0 java,jupyter%20notebook
 
 Outputs are written to `profile-summary-card-output/<theme>/`. Open `profile-summary-card-output/default/README.md` to preview every card in the default theme. When you point this at an organization, the productive-time slot is replaced by `4-productive-time-unsupported.svg` so you can verify the explanatory error card the Vercel route would return.
 
+**No token? Test the Action's output pipeline with mock data.** `npm run test:action` runs the exact generation flow the GitHub Action uses (theme filtering, animation, duration, name, preview markdown) against local fixtures — no token, no network. It honours the same knobs as the Action inputs, via env vars:
+
+```sh
+# One theme, sequence animation at 4s, custom title — writes profile-summary-card-output/github_dark/
+THEME=github_dark ANIMATION=sequence DURATION=4 NAME="Casper" UTC_OFFSET=8 npm run test:action
+
+# All themes, no animation (the Action's default)
+npm run test:action
+```
+
 ### 3. Run the API Locally
 A lightweight local dev server is bundled — no Vercel CLI required:
 ```sh
 npm run dev
 # then open http://localhost:3000/
 ```
-The dev server mounts the same route handlers used in production (`api/cards/*`), so requests like `http://localhost:3000/api/cards/profile-details?username=<login>&theme=<theme>` exercise the exact code path Vercel runs. The index page at `/` includes a form that renders every card for a given login + theme.
+The dev server mounts the same route handlers used in production (`api/cards/*`), so requests like `http://localhost:3000/api/cards/profile-details?username=<login>&theme=<theme>` exercise the exact code path Vercel runs. The index page at `/` includes a form that renders every card for a given login + theme, plus a theme/animation picker and a **Replay** button to watch the entrance animation.
+
+**No token? No problem.** When no `GITHUB_TOKEN` is set, the dev server automatically serves **mock cards** from local fixtures — no network calls — which is ideal for iterating on themes and animations. Add `&mock=1` to any card URL to force fixtures even when a token is present, or `&mock=0` to force live data.
 
 If you'd rather use the real Vercel runtime (closer match to production behaviour but requires linking the repo to a Vercel project):
 ```sh

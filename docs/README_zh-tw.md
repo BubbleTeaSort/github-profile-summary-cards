@@ -64,6 +64,31 @@
 
 解決 [#110](https://github.com/vn7n24fzkq/github-profile-summary-cards/issues/110) 與 [#152](https://github.com/vn7n24fzkq/github-profile-summary-cards/issues/152)。
 
+## 進場動畫 (Animations)
+
+每個卡片端點都接受選用的 `animation` 參數,讓卡片首次載入時播放純 CSS 進場動畫(可在 GitHub README 上運作 —— GitHub 允許 CSS 但會移除 script):
+
+`none`(預設)、`fade`、`rise`、`draw`、`stagger`、`load`、`sequence`、`tint`、`rgb`、`rgb-soft`
+
+- `fade` / `rise` —— 內容淡入(`rise` 會再輕微上浮);背景框立即顯示。
+- `draw` —— 長條圖長出、甜甜圈/區塊彈入、折線沿時間軸描繪。
+- `stagger` —— 各內容元件依序淡入。
+- `load` —— 編排式的「載入 → 完成」組裝感:各部位逐一出現,最後圖表描繪上去。
+- `sequence` —— 每個元件逐一出現:標題、每條資料、每個語言、每根長條依序,折線由左至右揭示。
+- `tint` —— 一次性的顏色進場:內容淡入時,顏色由偏移色相漸變回最終配色。
+- `rgb` —— 持續循環的「電競 RGB」效果:整張卡片(含背景/邊框)的顏色在色相環上不斷循環(以你選的 theme 顏色為基礎;此效果會一直循環而非只播一次)。
+- `rgb-soft` —— 同樣的循環變色,但**只作用在內容**,背景/邊框維持 theme 原色。
+
+每個進場動畫(`rgb` 以外)都讓背景框立即顯示、只動個別內容元件。所有動畫都能用 `duration` 調速(`rgb` 則是循環週期)。
+
+`http://github-profile-summary-cards.vercel.app/api/cards/stats?username=vn7n24fzkq&theme=default&animation=load`
+
+每種動畫都有預設速度。想更快或更慢,可加上 `duration`(秒,範圍 `0.2`–`10`)—— 它會等比例縮放整段動畫(含逐項/描繪的時間):
+
+`http://github-profile-summary-cards.vercel.app/api/cards/stats?username=vn7n24fzkq&theme=default&animation=load&duration=3`
+
+無法辨識的 `animation` 值一律視為 `none`;無效的 `duration` 會退回該動畫的預設值;若使用者系統開啟 `prefers-reduced-motion`,一律回傳最終(無動畫)的卡片。
+
 ---
 
 ## 設定 GitHub Token

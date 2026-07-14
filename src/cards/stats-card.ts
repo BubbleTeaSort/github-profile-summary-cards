@@ -4,15 +4,12 @@ import {abbreviateNumber} from 'js-abbreviation-number';
 import {getProfileDetails} from '../github-api/profile-details';
 import {getContributionByYear} from '../github-api/contributions-by-year';
 import {createStatsCard as statsCard} from '../templates/stats-card';
-import {writeSVG} from '../utils/file-writer';
+import {CardGenerationOptions, writeThemedCards} from '../utils/card-generation';
 
-export const createStatsCard = async function (username: string, token: string) {
+export const createStatsCard = async function (username: string, token: string, options: CardGenerationOptions = {}) {
     const statsData = await getStatsData(username, token);
-    for (const themeName of ThemeMap.keys()) {
-        const svgString = getStatsSVG(statsData, themeName);
-        // output to folder, use 3- prefix for sort in preview
-        writeSVG(themeName, '3-stats', svgString);
-    }
+    // use 3- prefix for sort in preview
+    writeThemedCards('3-stats', themeName => getStatsSVG(statsData, themeName), options);
 };
 
 export const getStatsSVGWithThemeName = async function (
@@ -48,7 +45,9 @@ const getStatsData = async function (
 
     const totalRepositoryContributions = profileDetails.totalRepositoryContributions;
     if (process.env.VERCEL) {
-        // If running on vercel, we only calculate for last 1 year to avoid Vercel timeout limit
+        // If running on vercel, we only calculate for last 1 year to avoid Vercel timeout limit.
+        // Sort descending first so we take the latest year (GitHub's order isn't guaranteed).
+        profileDetails.contributionYears.sort((a, b) => b - a);
         profileDetails.contributionYears = profileDetails.contributionYears.slice(0, 1);
         for (const year of profileDetails.contributionYears) {
             const contributions = await getContributionByYear(username, year, token);
@@ -79,7 +78,9 @@ const getStatsData = async function (
             : {
                   index: 1,
                   icon: Icon.COMMIT,
-                  name: `${profileDetails.contributionYears[0]} Commits:`,
+                  name: profileDetails.contributionYears[0]
+                      ? `${profileDetails.contributionYears[0]} Commits:`
+                      : 'Total Commits:',
                   value: `${abbreviateNumber(totalCommitContributions, 1)}`
               },
         {

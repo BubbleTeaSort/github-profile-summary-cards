@@ -1,4 +1,4 @@
-import {Card} from './card';
+import {Card, TITLE_LINE_HEIGHT} from './card';
 import * as d3 from 'd3';
 import {Theme} from '../const/theme';
 
@@ -14,16 +14,26 @@ export function createDetailCard(
     theme: Theme,
     chartCaption: string = 'contributions in the last year'
 ) {
-    const card = new Card(title, 700, 200, theme);
+    // A wrapped (two-line) title consumes one extra TITLE_LINE_HEIGHT of vertical
+    // space; grow the canvas to match so the details rows, chart and caption don't
+    // get pushed off the bottom of the (otherwise fixed) 200-px card.
+    const extraTitleLines = Math.max(0, title.split('\n').length - 1);
+    const card = new Card(title, 700, 200 + extraTitleLines * TITLE_LINE_HEIGHT, theme);
     const svg = card.getSVG();
 
     // draw icon
     const panel = svg.append('g').attr('transform', `translate(30,30)`);
     const labelHeight = 14;
+    // Each detail row (icon + value) is an animatable item sharing --gpsc-i, so rows
+    // reveal one at a time. The icon's SVG translate lives on an inner group so the
+    // transform-free `.gpsc-item` wrapper can be safely CSS-transformed.
     panel
         .selectAll(null)
         .data(userDetails)
         .enter()
+        .append('g')
+        .attr('class', 'gpsc-item')
+        .style('--gpsc-i', d => String(d.index))
         .append('g')
         .attr('transform', d => {
             const y = labelHeight * d.index * 2;
@@ -45,6 +55,8 @@ export function createDetailCard(
         })
         .attr('x', labelHeight * 1.5)
         .attr('y', d => labelHeight * d.index * 2 + labelHeight)
+        .attr('class', 'gpsc-item')
+        .style('--gpsc-i', d => String(d.index))
         .style('fill', theme.text)
         .style('font-size', `${labelHeight}px`);
 
@@ -69,7 +81,11 @@ export function createDetailCard(
     // prepare chart data
     const chartRightMargin = 30;
     const chartWidth = card.width - 2 * card.xPadding - chartRightMargin - 230;
-    const chartHeight = card.height - 2 * card.yPadding - 10;
+    // Keep the chart the same physical size regardless of a wrapped title: the extra
+    // canvas height is padding that pushes the chart down, not room for it to grow
+    // into (otherwise the taller chart's x-axis overruns the caption below it).
+    const extraTitleHeight = extraTitleLines * TITLE_LINE_HEIGHT;
+    const chartHeight = card.height - extraTitleHeight - 2 * card.yPadding - 10;
     const x = d3.scaleTime().range([0, chartWidth]);
 
     x.domain(
@@ -106,8 +122,38 @@ export function createDetailCard(
         .attr('color', theme.chart)
         .attr('transform', `translate(${card.width - chartWidth - card.xPadding + 5},10)`);
 
-    // draw chart line
+    // Inert reveal clip: a full-size rect clipping the area chart. By default it
+    // covers the whole plotting region (no visual change); a "reveal"/"sequence"
+    // animation scales it in from the left so the area draws on along the x-axis.
+    const REVEAL_CLIP_ID = 'gpsc-reveal-clip';
+    const revealWidth = chartWidth + chartRightMargin;
     chartPanel
+        .append('clipPath')
+        .attr('id', REVEAL_CLIP_ID)
+        .append('rect')
+        .attr('class', 'gpsc-reveal')
+        .attr('x', -chartRightMargin)
+        .attr('y', 0)
+        .attr('width', revealWidth)
+        .attr('height', chartHeight)
+        // Full width available to the wipe animation, which slides the clip in from
+        // the left by this many px (a reliably left-to-right reveal; no
+        // transform-origin). The index places the wipe after the detail rows.
+        .style('--gpsc-w', `${revealWidth}px`)
+        .style('--gpsc-i', String(userDetails.length));
+
+    // draw chart line (inside a transform-less, clipped wrapper so the reveal clip
+    // lines up with the plotting area). The wrapper is an animatable item (revealed
+    // after the detail rows) so it fades in for the non-drawing presets.
+    chartPanel
+        .append('g')
+        .attr('clip-path', `url(#${REVEAL_CLIP_ID})`)
+        // `.gpsc-chart` (not `.gpsc-item`): the non-drawing presets fade it in with
+        // the content, while the drawing presets (draw/load/sequence) leave its
+        // opacity alone and reveal it purely via the `.gpsc-reveal` clip wipe — so
+        // the two never fight and the line always draws from the left.
+        .attr('class', 'gpsc-chart')
+        .style('--gpsc-i', String(userDetails.length))
         .append('path')
         .data([lineChartData])
         .attr('transform', `translate(${-chartRightMargin},0)`)
