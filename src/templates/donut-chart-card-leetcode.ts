@@ -83,7 +83,7 @@ export function createDonutChartCard(
         .attr('viewBox', '0 0 24 24')
         .attr('width', logoSize)
         .attr('height', logoSize)
-        .attr('fill', theme.text)
+        .attr('fill', theme.icon)
         .html(Icon.LEETCODE);
     return card.toString();
 }
