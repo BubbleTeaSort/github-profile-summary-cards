@@ -1,3 +1,6 @@
+> [!WARNING]
+> The API endpoint at the [base URL](http://github-profile-summary-cards-peach-pi.vercel.app) should only be used for LeetCode cards as the GitHub token pool is not configured for this deployment
+
 <div align="center">
    <h1>LeetCode Profile Summary Cards</h1>
 
