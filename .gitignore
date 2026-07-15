@@ -128,6 +128,9 @@ tests/runner/*
 # Ignore jest report
 junit.xml
 
+# Env
+.env*
+
 # Visual Studio
 .vs/
 *.vspscc

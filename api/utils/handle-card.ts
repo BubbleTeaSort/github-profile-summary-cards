@@ -1,5 +1,6 @@
 import {getGitHubToken} from './github-token-updater';
 import {getErrorMsgCard} from './error-card';
+import {waitUntil} from '@vercel/functions';
 import {sendAnalytics, resolveSource} from '../../src/utils/analytics';
 import {CONST_CACHE_CONTROL} from '../../src/const/cache';
 import {resolveThemeName, parseThemeColorOverride, ThemeColorOverride} from '../../src/const/theme';
@@ -81,10 +82,13 @@ export async function handleCard(
                 res.setHeader('Content-Type', 'image/svg+xml');
                 res.setHeader('Cache-Control', CONST_CACHE_CONTROL);
                 res.send(applyAnimation(cardSVG, animation, req.query.duration));
-                // Fire-and-forget: don't block the response on analytics. Tag the
-                // source (demo page vs README embed vs other) for GA segmentation.
+                // Don't block the response on analytics, but keep the invocation
+                // alive until the GA call settles — a bare `void` promise gets
+                // frozen with the lambda after res.send and aborts on the next
+                // thaw. Tag the source (demo page vs README embed vs other) for
+                // GA segmentation.
                 const source = resolveSource(req.query.source, String(req.headers['user-agent'] ?? ''));
-                void sendAnalytics(eventName, {username, theme, source, ...extraAnalytics}, req.headers);
+                waitUntil(sendAnalytics(eventName, {username, theme, source, ...extraAnalytics}, req.headers));
                 return;
             } catch (err: any) {
                 console.log(err.message);
@@ -103,9 +107,10 @@ export async function handleCard(
         // and response body.
         console.log(`card error [${eventName}] status=${err?.response?.status ?? 'n/a'}: ${err?.message ?? 'unknown'}`);
         res.setHeader('Content-Type', 'image/svg+xml');
-        // Short cache so a transient outage doesn't re-invoke the function on every
-        // request, but clears quickly (and lets image proxies refetch) once healthy.
-        res.setHeader('Cache-Control', 'public, max-age=60');
+        // Cache errors long enough that repeat views don't re-invoke the function
+        // while we're rate limited (GitHub's GraphQL window is a full hour), but
+        // short enough to recover promptly once the quota resets.
+        res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300');
         res.send(getErrorMsgCard(safeErrorMessage(err), theme));
     }
 }
