@@ -107,9 +107,10 @@ export async function handleCard(
         // and response body.
         console.log(`card error [${eventName}] status=${err?.response?.status ?? 'n/a'}: ${err?.message ?? 'unknown'}`);
         res.setHeader('Content-Type', 'image/svg+xml');
-        // Short cache so a transient outage doesn't re-invoke the function on every
-        // request, but clears quickly (and lets image proxies refetch) once healthy.
-        res.setHeader('Cache-Control', 'public, max-age=60');
+        // Cache errors long enough that repeat views don't re-invoke the function
+        // while we're rate limited (GitHub's GraphQL window is a full hour), but
+        // short enough to recover promptly once the quota resets.
+        res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300');
         res.send(getErrorMsgCard(safeErrorMessage(err), theme));
     }
 }
