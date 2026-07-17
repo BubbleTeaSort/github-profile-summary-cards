@@ -5,6 +5,7 @@
 // time) and attribute it to that repo's primary language. `first: 1` is used
 // only to satisfy the connection arg — we read `totalCount`, not the nodes.
 import request, {assertNoGraphQLErrors} from '../utils/request';
+import {withDataCache} from '../utils/data-cache';
 import {CommitLanguages} from './commits-per-language';
 
 const MAX_REPOS = 50;
@@ -23,6 +24,8 @@ const fetcher = (token: string, variables: any) => {
           ... on Organization {
             repositories(first: $first, privacy: PUBLIC, isFork: false, ownerAffiliations: OWNER, orderBy: {direction: DESC, field: STARGAZERS}) {
               nodes {
+                name
+                nameWithOwner
                 primaryLanguage {
                   name
                   color
@@ -51,28 +54,40 @@ const fetcher = (token: string, variables: any) => {
 export async function getOrganizationCommitLanguage(
     login: string,
     exclude: Array<string>,
-    token: string
+    token: string,
+    excludeRepos: Array<string> = []
 ): Promise<CommitLanguages> {
     const commitLanguages = new CommitLanguages();
 
-    const res = await fetcher(token, {
-        login: login,
-        first: MAX_REPOS
+    // Raw node list cached per login; filters apply after the cache boundary.
+    const orgNodes = await withDataCache(`v1:ocl:${login.toLowerCase()}`, async () => {
+        const res = await fetcher(token, {
+            login: login,
+            first: MAX_REPOS
+        });
+
+        assertNoGraphQLErrors(res, 'GetOrganizationCommitLanguage failed');
+
+        const owner = res.data.data.repositoryOwner;
+        if (!owner || owner.__typename !== 'Organization') {
+            throw Error(`Organization not found: ${login}`);
+        }
+        return owner.repositories.nodes;
     });
 
-    assertNoGraphQLErrors(res, 'GetOrganizationCommitLanguage failed');
-
-    const owner = res.data.data.repositoryOwner;
-    if (!owner || owner.__typename !== 'Organization') {
-        throw Error(`Organization not found: ${login}`);
-    }
-    const org = owner;
-
-    org.repositories.nodes.forEach(
+    orgNodes.forEach(
         (node: {
+            name: string;
+            nameWithOwner: string;
             primaryLanguage: {name: string; color: string} | null;
             defaultBranchRef: {target: {history: {totalCount: number}}} | null;
         }) => {
+            if (
+                excludeRepos.includes((node.name ?? '').toLowerCase()) ||
+                excludeRepos.includes((node.nameWithOwner ?? '').toLowerCase())
+            ) {
+                return;
+            }
             if (node.primaryLanguage == null || node.defaultBranchRef == null) {
                 return;
             }

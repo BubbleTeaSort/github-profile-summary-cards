@@ -55,9 +55,20 @@ jobs:
           # Pushing to `release` triggers the Vercel production deployment
           git push -f origin release
 
+      - name: Get previous release tag
+        id: prev
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # `release` is force-recreated every time, so old tags are not ancestors
+        # of the new one and GitHub's automatic previous-tag detection walks back
+        # to an ancient tag (every changelog looked identical). Pin the comparison
+        # base to the latest published release explicitly.
+        run: echo "tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName || true)" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.event.inputs.tag_name }}
           target_commitish: release
           generate_release_notes: true
+          previous_tag: ${{ steps.prev.outputs.tag }}

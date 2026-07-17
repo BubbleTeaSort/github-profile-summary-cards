@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
@@ -68,8 +68,7 @@
                 margin: 0;
                 background: var(--bg);
                 color: var(--fg);
-                font-family:
-                    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
                     'Apple Color Emoji', 'Segoe UI Emoji';
                 line-height: 1.5;
             }
@@ -126,6 +125,13 @@
                 color: var(--accent-fg);
                 border-color: var(--accent);
             }
+            .btn .count {
+                font-size: 0.85em;
+                border: 1px solid var(--border);
+                border-radius: 999px;
+                padding: 0 0.5em;
+                background: var(--bg);
+            }
 
             .layout {
                 display: grid;
@@ -148,6 +154,42 @@
             .controls {
                 position: sticky;
                 top: 1rem;
+            }
+            .controls-toggle {
+                display: none;
+            }
+            @media (max-width: 800px) {
+                /* On phones the panel stacks above the cards; sticky would pin
+                   the taller-than-viewport panel over everything while
+                   scrolling. Make it static and collapsible instead. */
+                .controls {
+                    position: static;
+                }
+                .controls-toggle {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    width: 100%;
+                    font: inherit;
+                    font-weight: 600;
+                    background: none;
+                    border: none;
+                    color: var(--fg);
+                    padding: 0.1rem 0;
+                    cursor: pointer;
+                }
+                .controls-toggle .chev {
+                    transition: transform 0.15s;
+                }
+                .controls.collapsed .controls-body {
+                    display: none;
+                }
+                .controls.collapsed .controls-toggle .chev {
+                    transform: rotate(-90deg);
+                }
+                .controls:not(.collapsed) .controls-body {
+                    margin-top: 0.9rem;
+                }
             }
             .field {
                 margin-bottom: 0.9rem;
@@ -283,85 +325,137 @@
                 outline-offset: 2px;
             }
         </style>
+        <!-- GA4 page analytics. The measurement ID is public by design; the
+             Measurement Protocol api_secret stays server-side. Conservative
+             consent defaults: no ad storage/signals, only analytics.
+             No SRI hash: gtag.js is dynamically generated and updated by
+             Google, so a pinned integrity value would break on every rollout —
+             the accepted trade-off for Google-hosted tags. -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-MSMZVNK63E"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            gtag('consent', 'default', {
+                ad_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied',
+                analytics_storage: 'granted'
+            });
+            gtag('js', new Date());
+            gtag('config', 'G-MSMZVNK63E');
+        </script>
     </head>
     <body>
         <div class="wrap">
             <header>
                 <h1>GitHub Profile Summary Cards</h1>
                 <div class="toolbar">
-                    <button class="btn" id="themeToggle" type="button" aria-label="Toggle colour theme">🌓 Theme</button>
+                    <button class="btn" id="themeToggle" type="button" aria-label="Toggle colour theme">
+                        🌓 Theme
+                    </button>
                     <a
                         class="btn"
                         href="https://github.com/vn7n24fzkq/github-profile-summary-cards"
                         target="_blank"
                         rel="noopener"
-                        >★ Star on GitHub</a
-                    >
+                        >★ Star on GitHub <span class="count" id="starCount" hidden></span
+                    ></a>
                 </div>
                 <p class="sub">
-                    Generate summary cards for your profile README — pick a theme, tweak colours and animation, then copy
-                    the Markdown.
+                    Generate summary cards for your profile README — pick a theme, tweak colours and animation, then
+                    copy the Markdown.
                 </p>
             </header>
 
             <div class="layout">
                 <!-- ---------------- Controls ---------------- -->
                 <form class="panel controls" id="form" autocomplete="off">
-                    <div class="field">
-                        <label for="username">GitHub username / organization</label>
-                        <input id="username" name="username" value="vn7n24fzkq" required />
-                    </div>
-
-                    <div class="row">
+                    <button
+                        type="button"
+                        class="controls-toggle"
+                        id="controlsToggle"
+                        aria-expanded="true"
+                        aria-controls="controlsBody"
+                    >
+                        ⚙️ Customize <span class="chev" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="controls-body" id="controlsBody">
                         <div class="field">
-                            <label for="theme">Theme</label>
-                            <select id="theme" name="theme"></select>
+                            <label for="username">GitHub username / organization</label>
+                            <input id="username" name="username" value="vn7n24fzkq" required />
                         </div>
+
+                        <div class="row">
+                            <div class="field">
+                                <label for="theme">Theme</label>
+                                <select id="theme" name="theme"></select>
+                            </div>
+                            <div class="field">
+                                <label for="animation">Animation</label>
+                                <select id="animation" name="animation">
+                                    <option value="">none</option>
+                                    <option value="fade">fade</option>
+                                    <option value="rise">rise</option>
+                                    <option value="draw">draw</option>
+                                    <option value="stagger">stagger</option>
+                                    <option value="load">load</option>
+                                    <option value="sequence">sequence</option>
+                                    <option value="tint">tint</option>
+                                    <option value="rgb">rgb</option>
+                                    <option value="rgb-soft">rgb-soft</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="field">
+                                <label for="duration">Duration (s)</label>
+                                <input
+                                    id="duration"
+                                    name="duration"
+                                    type="number"
+                                    min="0.2"
+                                    max="10"
+                                    step="0.1"
+                                    placeholder="default"
+                                />
+                            </div>
+                            <div class="field">
+                                <label for="utcOffset">UTC offset</label>
+                                <input
+                                    id="utcOffset"
+                                    name="utcOffset"
+                                    type="number"
+                                    min="-12"
+                                    max="14"
+                                    step="1"
+                                    value="0"
+                                />
+                            </div>
+                        </div>
+
                         <div class="field">
-                            <label for="animation">Animation</label>
-                            <select id="animation" name="animation">
-                                <option value="">none</option>
-                                <option value="fade">fade</option>
-                                <option value="rise">rise</option>
-                                <option value="draw">draw</option>
-                                <option value="stagger">stagger</option>
-                                <option value="load">load</option>
-                                <option value="sequence">sequence</option>
-                                <option value="tint">tint</option>
-                                <option value="rgb">rgb</option>
-                                <option value="rgb-soft">rgb-soft</option>
-                            </select>
+                            <label for="name">Display name (profile card)</label>
+                            <input id="name" name="name" placeholder="default: login (name)" />
                         </div>
-                    </div>
 
-                    <div class="row">
                         <div class="field">
-                            <label for="duration">Duration (s)</label>
-                            <input id="duration" name="duration" type="number" min="0.2" max="10" step="0.1" placeholder="default" />
+                            <label for="exclude">Exclude languages (comma separated)</label>
+                            <input id="exclude" name="exclude" placeholder="e.g. html,css" />
                         </div>
-                        <div class="field">
-                            <label for="utcOffset">UTC offset</label>
-                            <input id="utcOffset" name="utcOffset" type="number" min="-12" max="14" step="1" value="0" />
-                        </div>
+
+                        <details class="colors">
+                            <summary>Custom colours</summary>
+                            <div class="colorgrid" id="colorgrid"></div>
+                            <p class="hint">Leave a colour unticked to use the theme's default.</p>
+                        </details>
+
+                        <button class="btn primary" id="copyAll" type="button" style="width: 100%">
+                            📋 Copy all Markdown
+                        </button>
                     </div>
-
-                    <div class="field">
-                        <label for="name">Display name (profile card)</label>
-                        <input id="name" name="name" placeholder="default: login (name)" />
-                    </div>
-
-                    <div class="field">
-                        <label for="exclude">Exclude languages (comma separated)</label>
-                        <input id="exclude" name="exclude" placeholder="e.g. html,css" />
-                    </div>
-
-                    <details class="colors">
-                        <summary>Custom colours</summary>
-                        <div class="colorgrid" id="colorgrid"></div>
-                        <p class="hint">Leave a colour unticked to use the theme's default.</p>
-                    </details>
-
-                    <button class="btn primary" id="copyAll" type="button" style="width: 100%">📋 Copy all Markdown</button>
                 </form>
 
                 <!-- ---------------- Preview ---------------- -->
@@ -378,7 +472,12 @@
                     </div>
                     <footer>
                         Cards update as you type. Markdown you copy points at this site's API —
-                        <a href="https://github.com/vn7n24fzkq/github-profile-summary-cards" target="_blank" rel="noopener">docs &amp; self-hosting</a>.
+                        <a
+                            href="https://github.com/vn7n24fzkq/github-profile-summary-cards"
+                            target="_blank"
+                            rel="noopener"
+                            >docs &amp; self-hosting</a
+                        >.
                     </footer>
                 </div>
             </div>
@@ -406,7 +505,16 @@
                     ['icon_color', 'Icon'],
                     ['chart_color', 'Chart']
                 ];
-                var FALLBACK_THEMES = ['default', 'github_dark', 'dracula', 'tokyonight', 'solarized', 'gruvbox', 'nord_dark', 'transparent'];
+                var FALLBACK_THEMES = [
+                    'default',
+                    'github_dark',
+                    'dracula',
+                    'tokyonight',
+                    'solarized',
+                    'gruvbox',
+                    'nord_dark',
+                    'transparent'
+                ];
 
                 var form = document.getElementById('form');
                 var cardsEl = document.getElementById('cards');
@@ -422,9 +530,15 @@
                     var row = document.createElement('label');
                     row.className = 'colorrow';
                     row.innerHTML =
-                        '<input type="checkbox" data-enable="' + key + '"> ' +
-                        '<input type="color" data-color="' + key + '" value="#000000"> ' +
-                        '<span>' + c[1] + '</span>';
+                        '<input type="checkbox" data-enable="' +
+                        key +
+                        '"> ' +
+                        '<input type="color" data-color="' +
+                        key +
+                        '" value="#000000"> ' +
+                        '<span>' +
+                        c[1] +
+                        '</span>';
                     colorGrid.appendChild(row);
                 });
 
@@ -464,7 +578,10 @@
                         var off = clampNum(els.utcOffset.value, -12, 14);
                         if (off !== null) p.set('utcOffset', String(off));
                     }
-                    if ((endpoint === 'repos-per-language' || endpoint === 'most-commit-language') && els.exclude.value.trim())
+                    if (
+                        (endpoint === 'repos-per-language' || endpoint === 'most-commit-language') &&
+                        els.exclude.value.trim()
+                    )
                         p.set('exclude', els.exclude.value.trim());
                     colorParams().forEach(function (kv) {
                         p.set(kv[0], kv[1]);
@@ -490,7 +607,8 @@
                         return;
                     }
                     var bust = Date.now(); // cache-buster so animations replay on re-render
-                    CARDS.forEach(function (c) {
+                    var pending = []; // stagger queue — see below
+                    CARDS.forEach(function (c, idx) {
                         var endpoint = c[0],
                             label = c[1],
                             wide = c[2];
@@ -501,7 +619,12 @@
                         var img = document.createElement('img');
                         img.loading = 'lazy';
                         img.alt = label + ' card preview';
-                        img.src = cardUrl(endpoint, true) + '&_t=' + bust;
+                        // Stagger the five requests: for an uncached heavyweight
+                        // account, firing them simultaneously can burst dozens of
+                        // parallel GitHub queries server-side and trip secondary
+                        // rate limits. Each card starts when the previous one
+                        // settles (or after a short timeout).
+                        pending.push({img: img, src: cardUrl(endpoint, true) + '&_t=' + bust});
                         fig.appendChild(img);
 
                         var meta = document.createElement('div');
@@ -522,6 +645,24 @@
                         card.appendChild(meta);
                         cardsEl.appendChild(card);
                     });
+
+                    // Kick off the staggered loads: next card starts when the
+                    // previous settles, with a 4s safety timeout so one slow
+                    // card never stalls the rest.
+                    (function loadNext(i) {
+                        if (i >= pending.length) return;
+                        var item = pending[i];
+                        var advanced = false;
+                        var advance = function () {
+                            if (advanced) return;
+                            advanced = true;
+                            loadNext(i + 1);
+                        };
+                        item.img.addEventListener('load', advance);
+                        item.img.addEventListener('error', advance);
+                        setTimeout(advance, 4000);
+                        item.img.src = item.src;
+                    })(0);
                 }
 
                 function copyText(text, btn) {
@@ -667,6 +808,55 @@
                     .catch(function () {
                         fillThemes(FALLBACK_THEMES);
                     });
+
+                // ---- Collapsible controls on small screens ----
+                // The panel is taller than a phone viewport; start it collapsed
+                // so visitors see the cards first, one tap away from tweaking.
+                (function () {
+                    var form = document.getElementById('form');
+                    var toggle = document.getElementById('controlsToggle');
+                    function setCollapsed(collapsed) {
+                        form.classList.toggle('collapsed', collapsed);
+                        toggle.setAttribute('aria-expanded', String(!collapsed));
+                    }
+                    if (window.matchMedia && window.matchMedia('(max-width: 800px)').matches) {
+                        setCollapsed(true);
+                    }
+                    toggle.addEventListener('click', function () {
+                        setCollapsed(!form.classList.contains('collapsed'));
+                    });
+                })();
+
+                // ---- Live star count on the GitHub button ----
+                // Unauthenticated GitHub API is limited to 60 req/h per client IP,
+                // so cache the count for an hour; on any failure just leave the
+                // badge hidden — the button works fine without it.
+                (function () {
+                    var el = document.getElementById('starCount');
+                    function show(n) {
+                        el.textContent = n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n);
+                        el.hidden = false;
+                    }
+                    try {
+                        var cached = JSON.parse(sessionStorage.getItem('gpsc-stars') || 'null');
+                        if (cached && Date.now() - cached.at < 3600000) return show(cached.n);
+                    } catch (e) {}
+                    fetch('https://api.github.com/repos/vn7n24fzkq/github-profile-summary-cards')
+                        .then(function (r) {
+                            return r.ok ? r.json() : null;
+                        })
+                        .then(function (d) {
+                            if (!d || typeof d.stargazers_count !== 'number') return;
+                            show(d.stargazers_count);
+                            try {
+                                sessionStorage.setItem(
+                                    'gpsc-stars',
+                                    JSON.stringify({n: d.stargazers_count, at: Date.now()})
+                                );
+                            } catch (e) {}
+                        })
+                        .catch(function () {});
+                })();
             })();
         </script>
     </body>

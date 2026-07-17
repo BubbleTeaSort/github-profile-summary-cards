@@ -1,4 +1,6 @@
 import request, {assertNoGraphQLErrors} from '../utils/request';
+import {shouldFetchNextPage} from '../const/pagination';
+import {withDataCache} from '../utils/data-cache';
 import {RepoLanguages} from './repos-per-language';
 
 const fetcher = (token: string, variables: any) => {
@@ -15,6 +17,8 @@ const fetcher = (token: string, variables: any) => {
           ... on Organization {
             repositories(isFork: false, first: 100, after: $endCursor, privacy: PUBLIC, ownerAffiliations: OWNER, orderBy: {direction: DESC, field: STARGAZERS}) {
               nodes {
+                name
+                nameWithOwner
                 primaryLanguage {
                   name
                   color
@@ -38,36 +42,54 @@ const fetcher = (token: string, variables: any) => {
 export async function getOrganizationRepoLanguages(
     login: string,
     exclude: Array<string>,
-    token: string
+    token: string,
+    excludeRepos: Array<string> = []
 ): Promise<RepoLanguages> {
-    // Vercel: top-100 by stars in one query. Action/CLI: paginate all. See the
-    // note in the user repos-per-language module.
+    // Bounded pagination on Vercel, unbounded off it (see src/const/pagination.ts).
+    // Raw node list cached per login; filters apply after the cache boundary.
     const repoLanguages = new RepoLanguages();
-    const nodes: {primaryLanguage: {name: string; color: string} | null}[] = [];
-    let cursor: string | null = null;
-    let hasNextPage = true;
+    const nodes = await withDataCache(`v1:orl:${login.toLowerCase()}`, async () => {
+        const collected: {
+            name: string;
+            nameWithOwner: string;
+            primaryLanguage: {name: string; color: string} | null;
+        }[] = [];
+        let cursor: string | null = null;
+        let hasNextPage = true;
+        let pages = 0;
 
-    while (hasNextPage) {
-        const res: any = await fetcher(token, {login: login, endCursor: cursor});
-        assertNoGraphQLErrors(res, 'GetOrganizationRepoLanguage fail');
-        const owner = res.data.data.repositoryOwner;
-        if (!owner || owner.__typename !== 'Organization') {
-            throw Error(`Organization not found: ${login}`);
+        while (hasNextPage) {
+            const res: any = await fetcher(token, {login: login, endCursor: cursor});
+            assertNoGraphQLErrors(res, 'GetOrganizationRepoLanguage fail');
+            const owner = res.data.data.repositoryOwner;
+            if (!owner || owner.__typename !== 'Organization') {
+                throw Error(`Organization not found: ${login}`);
+            }
+            collected.push(...owner.repositories.nodes);
+            cursor = owner.repositories.pageInfo?.endCursor ?? null;
+            pages += 1;
+            hasNextPage = shouldFetchNextPage(!!owner.repositories.pageInfo?.hasNextPage, pages);
         }
-        nodes.push(...owner.repositories.nodes);
-        cursor = owner.repositories.pageInfo?.endCursor ?? null;
-        hasNextPage = !process.env.VERCEL && !!owner.repositories.pageInfo?.hasNextPage;
-    }
+        return collected;
+    });
 
-    nodes.forEach((node: {primaryLanguage: {name: string; color: string} | null}) => {
-        if (node.primaryLanguage) {
-            const langName = node.primaryLanguage.name;
-            const langColor = node.primaryLanguage.color;
-            if (!exclude.includes(langName.toLowerCase())) {
-                repoLanguages.addLanguage(langName, langColor);
+    nodes.forEach(
+        (node: {name: string; nameWithOwner: string; primaryLanguage: {name: string; color: string} | null}) => {
+            if (
+                excludeRepos.includes((node.name ?? '').toLowerCase()) ||
+                excludeRepos.includes((node.nameWithOwner ?? '').toLowerCase())
+            ) {
+                return;
+            }
+            if (node.primaryLanguage) {
+                const langName = node.primaryLanguage.name;
+                const langColor = node.primaryLanguage.color;
+                if (!exclude.includes(langName.toLowerCase())) {
+                    repoLanguages.addLanguage(langName, langColor);
+                }
             }
         }
-    });
+    );
 
     return repoLanguages;
 }

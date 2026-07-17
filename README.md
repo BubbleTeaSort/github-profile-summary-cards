@@ -81,6 +81,9 @@
     - A comma separated list of languages to exclude, e.g., exclude=java,rust,jupyter%20Notebook
       - You can represent a space in the language list by using '%20' when you want to include a space.
     - You can found the supported languages in [here](https://github.com/github/linguist/blob/master/lib/linguist/languages.yml)
+  - exclude_repos:
+    - A comma separated list of repository names to exclude (case-insensitive), e.g., exclude_repos=dotfiles,my-fork
+    - `owner/repo` entries also match, e.g., exclude_repos=vn7n24fzkq/dotfiles
 
 ### Top languages in commits card
 ![](docs/preview/api/most-commit-language.svg)
@@ -95,6 +98,9 @@
     - A comma separated list of languages to exclude, e.g., exclude=java,rust,jupyter%20Notebook
       - You can represent a space in the language list by using '%20' when you want to include a space.
     - You can found the supported languages in [here](https://github.com/github/linguist/blob/master/lib/linguist/languages.yml)
+  - exclude_repos:
+    - A comma separated list of repository names to exclude (case-insensitive), e.g., exclude_repos=dotfiles,my-fork
+    - Commits can come from other owners' repos, so `owner/repo` entries also match, e.g., exclude_repos=someorg/website
 
 ### LeetCode stats card
 ![](http://github-profile-summary-cards-peach-pi.vercel.app/api/cards/stats-leetcode?username=vn7n24fzkq&theme=nord_bright&)
@@ -126,6 +132,10 @@ Values are hex **without** the leading `#` — 3, 4, 6, or 8 digits (the 4/8-dig
 `http://github-profile-summary-cards.vercel.app/api/cards/stats?username=vn7n24fzkq&theme=dark&bg_color=00000000`
 
 Resolves [#110](https://github.com/vn7n24fzkq/github-profile-summary-cards/issues/110) and [#152](https://github.com/vn7n24fzkq/github-profile-summary-cards/issues/152).
+
+The stats card also accepts `hide_logo=true` to remove the GitHub logo on the right:
+
+`http://github-profile-summary-cards.vercel.app/api/cards/stats?username=vn7n24fzkq&theme=dark&hide_logo=true`
 
 ### Animations ✨ (new)
 

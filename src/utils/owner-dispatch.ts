@@ -55,11 +55,12 @@ export const dispatchReposPerLanguageSVG = function (
     themeName: string,
     exclude: Array<string>,
     token: string,
-    override?: ThemeColorOverride
+    override?: ThemeColorOverride,
+    excludeRepos: Array<string> = []
 ): Promise<string> {
     return dispatch(
-        () => getReposPerLanguageSVGWithThemeName(login, themeName, exclude, token, override),
-        () => getOrganizationReposPerLanguageSVGWithThemeName(login, themeName, exclude, token, override)
+        () => getReposPerLanguageSVGWithThemeName(login, themeName, exclude, token, override, excludeRepos),
+        () => getOrganizationReposPerLanguageSVGWithThemeName(login, themeName, exclude, token, override, excludeRepos)
     );
 };
 
@@ -68,11 +69,12 @@ export const dispatchMostCommitLanguageSVG = function (
     themeName: string,
     exclude: Array<string>,
     token: string,
-    override?: ThemeColorOverride
+    override?: ThemeColorOverride,
+    excludeRepos: Array<string> = []
 ): Promise<string> {
     return dispatch(
-        () => getCommitsLanguageSVGWithThemeName(login, themeName, exclude, token, override),
-        () => getOrganizationCommitsLanguageSVGWithThemeName(login, themeName, exclude, token, override)
+        () => getCommitsLanguageSVGWithThemeName(login, themeName, exclude, token, override, excludeRepos),
+        () => getOrganizationCommitsLanguageSVGWithThemeName(login, themeName, exclude, token, override, excludeRepos)
     );
 };
 
@@ -80,10 +82,11 @@ export const dispatchStatsSVG = function (
     login: string,
     themeName: string,
     token: string,
-    override?: ThemeColorOverride
+    override?: ThemeColorOverride,
+    hideLogo = false
 ): Promise<string> {
     return dispatch(
-        () => getStatsSVGWithThemeName(login, themeName, token, override),
-        () => getOrganizationStatsSVGWithThemeName(login, themeName, token, override)
+        () => getStatsSVGWithThemeName(login, themeName, token, override, hideLogo),
+        () => getOrganizationStatsSVGWithThemeName(login, themeName, token, override, hideLogo)
     );
 };
